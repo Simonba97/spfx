@@ -1,0 +1,14 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "edeas-e-spfx-personal-client-side-solution",
+    "id": "6854225f-bbe4-4021-90ff-fe7da704d136",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false
+  },
+  "paths": {
+    "zippedPackage": "solution/edeas-e-spfx-personal.sppkg"
+  }
+}
