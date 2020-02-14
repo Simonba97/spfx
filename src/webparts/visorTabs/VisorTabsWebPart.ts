@@ -4,10 +4,8 @@ import { Version } from '@microsoft/sp-core-library';
 import {
   BaseClientSideWebPart,
   IPropertyPaneConfiguration,
-  PropertyPaneTextField
 } from '@microsoft/sp-webpart-base';
 
-import * as strings from 'VisorTabsWebPartStrings';
 import VisorTabs from './components/VisorTabs';
 import { IVisorTabsProps } from './components/IVisorTabsProps';
 
@@ -17,6 +15,9 @@ import { PropertyFieldToggleWithCallout } from '@pnp/spfx-property-controls/lib/
 import { PropertyFieldCollectionData, CustomCollectionFieldType } from '@pnp/spfx-property-controls/lib/PropertyFieldCollectionData';
 import { PropertyFieldTextWithCallout } from '@pnp/spfx-property-controls/lib/PropertyFieldTextWithCallout';
 import { PropertyFieldNumber } from '@pnp/spfx-property-controls/lib/PropertyFieldNumber';
+import { PropertyFieldListPicker, PropertyFieldListPickerOrderBy } from '@pnp/spfx-property-controls/lib/PropertyFieldListPicker';
+import { IPropertyPaneField } from '@microsoft/sp-property-pane';
+
 
 import { Logger, LogLevel } from '@pnp/logging';
 import { TabsInvormativosServices } from '../../services/TabsInvormativosServices';
@@ -24,26 +25,24 @@ import { ServiceETools } from '../../utils/ServiceETools';
 import { IDLists } from "../../utils/IDLists";
 
 import { sp } from "@pnp/sp";
-import { LocalizedFontFamilies } from '@uifabric/styling/lib/styles/fonts';
-import { func } from 'prop-types';
 
 export interface IVisorTabsWebPartProps {
+  dropdownListSelected: string | string[]; // Stores the list ID(s)
   dropdownTypeVisor: string;
   toggleSearchInfo: boolean;
   collectionData: any[];
   collectionDataDinamic: any[];
   textUrlSite: string;
-  dropdownListSelected: string;
   textNameTitleFld: string;
   textNameContentFld: string;
-  numberCantElements: number;
+  numberCantElements: number;  
 }
 
 export default class VisorTabsWebPart extends BaseClientSideWebPart<IVisorTabsWebPartProps> {
 
   //servicio
   private _tabsInformativosServices: TabsInvormativosServices;
-  private _listsSite = [];
+  private _dinamycPropertyPaneField: IPropertyPaneField<any>[];
 
   /**
     * Metodo inicial del webpart
@@ -51,24 +50,22 @@ export default class VisorTabsWebPart extends BaseClientSideWebPart<IVisorTabsWe
     * @returns {Promise<void>}
     * @memberof VisorTabsWebPart
     */
-   protected async onInit(): Promise<void> {
-      try {
-          //Configuracion inicial de los servicios de SP
-          ServiceETools.spSetup(this.context);
+  protected async onInit(): Promise<void> {
+    try {
+      //Configuracion inicial de los servicios de SP
+      ServiceETools.spSetup(this.context);
 
-          //servicio
-          this._tabsInformativosServices = new TabsInvormativosServices(IDLists.tabsinformativos, this.context);
-          this.congigureInitial();
-          const items = await this._tabsInformativosServices.getItems(); // Render
-
-        } catch (err) {
-          Logger.log({ data: err, level: LogLevel.Error, message: "VisorWebPart > onInit > " });
-      }
-      return Promise.resolve();
+      //servicio
+     // this._tabsInformativosServices = new TabsInvormativosServices(IDLists.tabsinformativos, this.context);//inicializamos servicios
+    } catch (err) {
+      Logger.log({ data: err, level: LogLevel.Error, message: "VisorWebPart > onInit > " });
     }
+    return Promise.resolve();
+  }
 
   public render(): void {
-    const element: React.ReactElement<IVisorTabsProps > = React.createElement(
+    if (this.properties.dropdownListSelected) this._tabsInformativosServices = new TabsInvormativosServices(this.properties.dropdownListSelected.toString(), this.context);
+    const element: React.ReactElement<IVisorTabsProps> = React.createElement(
       VisorTabs,
       {
         dropdownTypeVisor: this.properties.dropdownTypeVisor,
@@ -81,6 +78,7 @@ export default class VisorTabsWebPart extends BaseClientSideWebPart<IVisorTabsWe
         textNameContentFld: this.properties.textNameContentFld,
         numberCantElements: this.properties.numberCantElements,
         context: this.context,
+        tabsInformativosServices: this._tabsInformativosServices,
       }
     );
 
@@ -102,118 +100,102 @@ export default class VisorTabsWebPart extends BaseClientSideWebPart<IVisorTabsWe
 
   protected async getListSiteById(idList, strSelect, intTop) {
     return await sp.web.lists.getById(idList).items
-                          .select(strSelect)
-                          .orderBy('orden')
-                          .top(intTop)
-                          .get();
-  }
+      .select(strSelect)
+      .orderBy('orden')
+      .top(intTop)
+      .get();
+  }  
 
-  protected async congigureInitial() {
-    if(this.properties.toggleSearchInfo && this.properties.collectionDataDinamic){
-      this.getListsSite()
-      .then((lists)=>{
-          console.warn(lists);
-
-          this._listsSite = []; //Clear array information
-          
-          lists.forEach((l)=>{
-            this._listsSite.push({
-              key: l.Id,
-              text: l.Title,
-            });//end push
-
-          }) //end forEach
-          const idListSelected = this.properties.dropdownListSelected;
-          const strSelect = `${this.properties.textNameTitleFld}, ${this.properties.textNameContentFld}`;
-          const intTop = this.properties.numberCantElements;
-          this.getListSiteById(idListSelected, strSelect, intTop)
-            .then((items: any[])=>{
-              this.properties.collectionDataDinamic = items;
-              console.log(items);
-            })
-            .catch((e)=>{
-              console.error(`Hubo un error: ${e.message}`);
-            })
-        }); // end then 
-    }
-  }
-
-  protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration { // onchange panel de propiedades
-    this.congigureInitial();
-    let groupNameMoreOptions = "";
-    let arrayGroupFields = [];
-    if(this.properties.toggleSearchInfo) {
-      arrayGroupFields = [];
-      groupNameMoreOptions = "Basados en una lista";
-      arrayGroupFields.push(PropertyFieldTextWithCallout('textUrlSite', {
-                              calloutTrigger: CalloutTriggers.Hover,
-                              key: 'textUrlSiteId',
-                              label: 'URL del sitio',
-                              value: this.properties.textUrlSite
-                            }),
-                            PropertyFieldDropdownWithCallout('dropdownListSelected', {
-                              calloutTrigger: CalloutTriggers.Hover,
-                              key: 'dropdownListSelectedId',
-                              label: "Lista",
-                              options: this._listsSite,
-                              selectedKey: this.properties.dropdownListSelected,
-                            }),
-                            PropertyFieldTextWithCallout('textNameTitleFld', {
-                              calloutTrigger: CalloutTriggers.Hover,
-                              key: 'textNameTitleFldId',
-                              label: 'Título',
-                              placeholder: 'Título',
-                              description: 'Nombre interno del campo',
-                              value: this.properties.textNameTitleFld
-                            }),
-                            PropertyFieldTextWithCallout('textNameContentFld', {
-                              calloutTrigger: CalloutTriggers.Hover,
-                              key: 'textNameContentFldId',
-                              label: 'Contenido',
-                              placeholder: 'Contenido',
-                              description: 'Nombre interno del campo',
-                              value: this.properties.textNameContentFld
-                            }),
-                            PropertyFieldNumber("numberCantElements", {
-                              key: "numberCantElements",
-                              label: "Cantidad de elementos",
-                              placeholder: 'Cantidad de elementos',
-                              value: this.properties.numberCantElements,
-                              minValue: 1,
-                              disabled: false
-                            }));
+  protected setDinamicPropertyPaneField() {
+    if (this.properties.toggleSearchInfo) {
+      this._dinamycPropertyPaneField = [
+        PropertyFieldTextWithCallout('textUrlSite', {
+          calloutTrigger: CalloutTriggers.Hover,
+          key: 'textUrlSiteId',
+          label: 'URL del sitio',
+          value: this.properties.textUrlSite
+        }),
+        PropertyFieldListPicker('dropdownListSelected', {
+          label: 'Lista ',
+          selectedList: this.properties.dropdownListSelected,
+          includeHidden: false,
+          orderBy: PropertyFieldListPickerOrderBy.Title,
+          disabled: false,
+          onPropertyChange: this.onPropertyPaneFieldChanged.bind(this),
+          properties: this.properties,
+          context: this.context,
+          onGetErrorMessage: null,
+          deferredValidationTime: 0,
+          key: 'listPickerFieldId',
+          webAbsoluteUrl: this.properties.textUrlSite ? this.properties.textUrlSite : '',
+          baseTemplate: 100,
+  
+        }),   
+        PropertyFieldTextWithCallout('textNameTitleFld', {
+          calloutTrigger: CalloutTriggers.Hover,
+          key: 'textNameTitleFldId',
+          label: 'Título',
+          placeholder: 'Título',
+          description: 'Nombre interno del campo',
+          value: this.properties.textNameTitleFld
+        }),
+        PropertyFieldTextWithCallout('textNameContentFld', {
+          calloutTrigger: CalloutTriggers.Hover,
+          key: 'textNameContentFldId',
+          label: 'Contenido',
+          placeholder: 'Contenido',
+          description: 'Nombre interno del campo',
+          value: this.properties.textNameContentFld
+        }),
+        PropertyFieldNumber("numberCantElements", {
+          key: "numberCantElements",
+          label: "Cantidad de elementos",
+          placeholder: 'Cantidad de elementos',
+          value: this.properties.numberCantElements,
+          minValue: 1,
+          disabled: false
+        })
+      ];     
     } else {
-      arrayGroupFields = [];
-      groupNameMoreOptions = "Basados en datos estáticos";
-      arrayGroupFields.push(PropertyFieldCollectionData("collectionData", {
-                              key: "collectionData",
-                              label: "Collection data",
-                              panelHeader: "Collection data panel header",
-                              manageBtnLabel: "Manage collection data",
-                              value: this.properties.collectionData,
-                              fields: [
-                                {
-                                  id: "title",
-                                  title: "Título",
-                                  type: CustomCollectionFieldType.string,
-                                  required: true
-                                },
-                                {
-                                  id: "contenido",
-                                  title: "Contenido",
-                                  type: CustomCollectionFieldType.string
-                                },
-                                {
-                                  id: "orden",
-                                  title: "Orden",
-                                  type: CustomCollectionFieldType.number,
-                                  required: true
-                                },
-                              ],
-                              disabled: false
-                            }));
-    };  
+      this._dinamycPropertyPaneField = [
+        PropertyFieldCollectionData("collectionData", {
+          key: "collectionData",
+          label: "Collection data",
+          panelHeader: "Collection data panel header",
+          manageBtnLabel: "Manage collection data",
+          value: this.properties.collectionData,
+          fields: [
+            {
+              id: "title",
+              title: "Título",
+              type: CustomCollectionFieldType.string,
+              required: true
+            },
+            {
+              id: "contenido",
+              title: "Contenido",
+              type: CustomCollectionFieldType.string
+            },
+            {
+              id: "orden",
+              title: "Orden",
+              type: CustomCollectionFieldType.number,
+              required: true
+            },
+          ],
+          disabled: false
+        })
+      ];
+    }
+  } // end getProperties()
 
+  // protected get disableReactivePropertyChanges(): boolean {
+  //   return true;
+  // }
+
+  public getPropertyPaneConfiguration(): IPropertyPaneConfiguration { // onchange panel de propiedades
+    let groupNameMoreOptions = this.properties.toggleSearchInfo ? "Basados en datos dinámicos" : "Basados en datos estáticos";
+    this.setDinamicPropertyPaneField(); // set fields to properties
     return {
       pages: [
         {
@@ -250,10 +232,10 @@ export default class VisorTabsWebPart extends BaseClientSideWebPart<IVisorTabsWe
             },
             {
               groupName: groupNameMoreOptions,
-              groupFields: arrayGroupFields,
+              groupFields: [...this._dinamycPropertyPaneField]
             }
           ]
-        },        
+        },
       ]
     };
   }

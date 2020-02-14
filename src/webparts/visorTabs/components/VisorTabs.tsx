@@ -7,14 +7,24 @@ import { Pivot, PivotItem, PivotLinkFormat } from 'office-ui-fabric-react/lib/Pi
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Placeholder } from "@pnp/spfx-controls-react/lib/Placeholder";
 import { autobind, imgProperties } from '@uifabric/utilities';
+import { IVisorTabsState } from './IVisorTabsState';
+import { sp } from '@pnp/sp';
 
-
-export default class VisorTabs extends React.Component<IVisorTabsProps, {}> {
+export default class VisorTabs extends React.Component<IVisorTabsProps, IVisorTabsState, {}> {
 
   @autobind
   private _onConfigure() {
     // Context of the web part
     this.props.context.propertyPane.open();
+  }
+
+  constructor(props: IVisorTabsProps, state: IVisorTabsState){
+    super(props);
+    
+    //inicializar el estado
+    this.state = {
+      items: []
+    };
   }
 
   public render(): React.ReactElement<IVisorTabsProps> {
@@ -30,10 +40,10 @@ export default class VisorTabs extends React.Component<IVisorTabsProps, {}> {
                   })
                 }         
             </Pivot>
-    } else if(this.props.toggleSearchInfo){
+    } else if(this.props.toggleSearchInfo && this.state.items.length > 0){
       return <Pivot linkFormat={PivotLinkFormat.tabs}>
-                this.props.collectionDataDinamic &&{
-                  this.props.collectionDataDinamic.map(pivot => {
+                this.state.items &&{
+                  this.state.items.map(pivot => {
                     return <PivotItem headerText={pivot.Title}>
                             <Label>{pivot.contenido}</Label>
                           </PivotItem> 
@@ -47,5 +57,45 @@ export default class VisorTabs extends React.Component<IVisorTabsProps, {}> {
                           buttonLabel='Configure'
                           onConfigure={this._onConfigure} />;
     }
+  } // end Render
+    
+  //al terminar la carga inicial del componente
+  public componentDidMount() {
+    // alert('componentDidMount');
+  } // end componentDidMount
+  
+  //Al cambiar las propiedades
+  public componentWillReceiveProps(props: IVisorTabsProps) {
+    if(props.toggleSearchInfo) this._fetchData(props);
+  } // end componentWillReceiveProps
+  
+//   //Consulta de datos por medio de servicios rest
+  private _fetchData(props: IVisorTabsProps) {
+    //se consulta el servicio rest y se asigna el state
+    const asyncCall = async () => {
+      try{
+
+        let items = await props.tabsInformativosServices.getItems({
+          select:`${props.textNameTitleFld}, ${props.textNameContentFld}`,
+          order: {by: 'orden', asc: true},
+          top: props.numberCantElements
+        }); //el servicio viene en los parametros de entrada
+        
+    
+        this.setState({
+          items: items
+        }); //se inicializa el render()
+        
+
+      } catch (err){
+        console.log(err);
+        this.setState({
+          items: []
+        }); //se inicializa el render()
+      }
+    }
+
+    //llamada al servicio anteriormente definido
+    asyncCall();
   }
 }
