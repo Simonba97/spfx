@@ -36,6 +36,11 @@ export interface IVisorTabsWebPartProps {
   textNameTitleFld: string;
   textNameContentFld: string;
   numberCantElements: number;  
+  textFilterBy: string;
+  operatorFilterBy: string;
+  textValueFilter: string;
+  orderBy: string;
+  toggleAsc: boolean;
 }
 
 export default class VisorTabsWebPart extends BaseClientSideWebPart<IVisorTabsWebPartProps> {
@@ -68,6 +73,9 @@ export default class VisorTabsWebPart extends BaseClientSideWebPart<IVisorTabsWe
     const element: React.ReactElement<IVisorTabsProps> = React.createElement(
       VisorTabs,
       {
+        tabsInformativosServices: this._tabsInformativosServices,
+        context: this.context,
+
         dropdownTypeVisor: this.properties.dropdownTypeVisor,
         toggleSearchInfo: this.properties.toggleSearchInfo,
         collectionData: this.properties.collectionData,
@@ -77,8 +85,11 @@ export default class VisorTabsWebPart extends BaseClientSideWebPart<IVisorTabsWe
         textNameTitleFld: this.properties.textNameTitleFld,
         textNameContentFld: this.properties.textNameContentFld,
         numberCantElements: this.properties.numberCantElements,
-        context: this.context,
-        tabsInformativosServices: this._tabsInformativosServices,
+        textFilterBy: this.properties.textFilterBy,
+        operatorFilterBy: this.properties.operatorFilterBy,
+        textValueFilter: this.properties.textValueFilter,
+        orderBy: this.properties.orderBy,
+        toggleAsc: this.properties.toggleAsc,
       }
     );
 
@@ -154,6 +165,61 @@ export default class VisorTabsWebPart extends BaseClientSideWebPart<IVisorTabsWe
           value: this.properties.numberCantElements,
           minValue: 1,
           disabled: false
+        }),
+        PropertyFieldTextWithCallout('textFilterBy', {
+          calloutTrigger: CalloutTriggers.Hover,
+          key: 'textFilterBy',
+          label: 'Filtrado por',
+          description: 'Nombre interno del campo',
+          value: this.properties.textFilterBy
+        }),
+        PropertyFieldDropdownWithCallout('operatorFilterBy', {
+          calloutTrigger: CalloutTriggers.Hover,
+          key: 'operatorFilterBy',
+          label: "Tipo de comparación",
+          options: [{
+            key: 'eq',
+            text: "Igual a"
+          }, {
+            key: 'ne',
+            text: "Diferente a"
+          }, {
+            key: 'lt',
+            text: "Menor que"
+          }, {
+            key: 'le',
+            text: "Menor igual que"
+          }, {
+            key: 'gt',
+            text: "Mayor que"
+          }, {
+            key: 'ge',
+            text: "Mayor igual que"
+          }],
+          selectedKey: this.properties.operatorFilterBy,
+        }),
+        PropertyFieldTextWithCallout('textValueFilter', {
+          calloutTrigger: CalloutTriggers.Hover,
+          key: 'textValueFilter',
+          label: 'Valor a filtrar',
+          value: this.properties.textValueFilter
+        }),
+        PropertyFieldTextWithCallout('orderBy', {
+          calloutTrigger: CalloutTriggers.Hover,
+          key: 'orderBy',
+          label: 'Ordenado por',
+          placeholder: 'Title',
+          description: 'Nombre interno del campo',
+          value: this.properties.orderBy
+        }),
+        PropertyFieldToggleWithCallout('toggleAsc', {
+          calloutTrigger: CalloutTriggers.Click,
+          key: 'toggleAscId',
+          label: "Descendente/Ascendente",
+          calloutContent: React.createElement('p', {}, 'With this control you can enable or disable the PnP features in your web part'),
+          onText: 'Asc',
+          offText: 'Desc',
+          checked: this.properties.toggleAsc
         })
       ];     
     } else {

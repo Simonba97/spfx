@@ -29,9 +29,10 @@ export default class VisorTabs extends React.Component<IVisorTabsProps, IVisorTa
 
   public render(): React.ReactElement<IVisorTabsProps> {
 
+    const themeTab = this.props.dropdownTypeVisor == "primaryTheme" ? PivotLinkFormat.tabs : PivotLinkFormat.links;
     if (this.props.collectionData != undefined && this.props.collectionData.length > 0 && !this.props.toggleSearchInfo){     
       this.props.collectionData.sort((a,b)=>a.orden-b.orden); 
-      return <Pivot linkFormat={PivotLinkFormat.tabs}>
+      return <Pivot linkFormat={themeTab}>
                 this.props.collectionData &&{
                   this.props.collectionData.map(pivot => {
                     return <PivotItem headerText={pivot.title}>
@@ -41,7 +42,7 @@ export default class VisorTabs extends React.Component<IVisorTabsProps, IVisorTa
                 }         
             </Pivot>
     } else if(this.props.toggleSearchInfo && this.state.items.length > 0){
-      return <Pivot linkFormat={PivotLinkFormat.tabs}>
+      return <Pivot linkFormat={themeTab}>
                 this.state.items &&{
                   this.state.items.map(pivot => {
                     return <PivotItem headerText={pivot.Title}>
@@ -75,10 +76,12 @@ export default class VisorTabs extends React.Component<IVisorTabsProps, IVisorTa
     const asyncCall = async () => {
       try{
 
+        const canFilter = props.textFilterBy && props.operatorFilterBy && props.textValueFilter;
         let items = await props.tabsInformativosServices.getItems({
           select:`${props.textNameTitleFld}, ${props.textNameContentFld}`,
-          order: {by: 'orden', asc: true},
-          top: props.numberCantElements
+          order: {by: props.orderBy, asc: props.toggleAsc},
+          top: props.numberCantElements ? props.numberCantElements : 10,
+          filter: canFilter ? `${props.textFilterBy} ${props.operatorFilterBy} ${props.textValueFilter}` : ''
         }); //el servicio viene en los parametros de entrada
         
     

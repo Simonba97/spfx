@@ -2,6 +2,9 @@ import { WebPartContext } from "@microsoft/sp-webpart-base";
 import { TabsInvormativosServices } from '../../../services/TabsInvormativosServices';
 
 export interface IVisorTabsProps {
+  tabsInformativosServices: TabsInvormativosServices;
+  context: WebPartContext;
+
   dropdownTypeVisor: string;
   toggleSearchInfo: boolean;
   collectionData: any[];
@@ -11,6 +14,9 @@ export interface IVisorTabsProps {
   textNameTitleFld: string;
   textNameContentFld: string;
   numberCantElements: number;
-  context: WebPartContext;
-  tabsInformativosServices: TabsInvormativosServices;
+  textFilterBy: string;
+  operatorFilterBy: string;
+  textValueFilter: string;
+  orderBy: string;
+  toggleAsc: boolean;
 }
