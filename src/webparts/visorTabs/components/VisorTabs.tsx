@@ -62,7 +62,7 @@ export default class VisorTabs extends React.Component<IVisorTabsProps, IVisorTa
     
   //al terminar la carga inicial del componente
   public componentDidMount() {
-    // alert('componentDidMount');
+    if(this.props.toggleSearchInfo) this._fetchData(this.props);
   } // end componentDidMount
   
   //Al cambiar las propiedades

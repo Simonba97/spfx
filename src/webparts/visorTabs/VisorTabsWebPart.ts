@@ -69,7 +69,9 @@ export default class VisorTabsWebPart extends BaseClientSideWebPart<IVisorTabsWe
   }
 
   public render(): void {
-    if (this.properties.dropdownListSelected) this._tabsInformativosServices = new TabsInvormativosServices(this.properties.dropdownListSelected.toString(), this.context);
+    if (this.properties.dropdownListSelected) {
+      this._tabsInformativosServices = new TabsInvormativosServices(this.properties.dropdownListSelected.toString(), this.context);
+    }
     const element: React.ReactElement<IVisorTabsProps> = React.createElement(
       VisorTabs,
       {
