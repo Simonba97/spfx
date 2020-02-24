@@ -70,7 +70,7 @@ export default class VisorTabs extends React.Component<IVisorTabsProps, IVisorTa
     if(props.toggleSearchInfo) this._fetchData(props);
   } // end componentWillReceiveProps
   
-//   //Consulta de datos por medio de servicios rest
+//Consulta de datos por medio de servicios rest
   private _fetchData(props: IVisorTabsProps) {
     //se consulta el servicio rest y se asigna el state
     const asyncCall = async () => {

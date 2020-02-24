@@ -5,6 +5,10 @@ import {
   IPropertyPaneConfiguration,
   PropertyPaneTextField
 } from '@microsoft/sp-property-pane';
+import { PropertyFieldMultiSelect } from '@pnp/spfx-property-controls/lib/PropertyFieldMultiSelect';
+import { CalloutTriggers } from '@pnp/spfx-property-controls/lib/PropertyFieldHeader';
+import { PropertyFieldToggleWithCallout } from '@pnp/spfx-property-controls/lib/PropertyFieldToggleWithCallout';
+
 import { Logger, LogLevel } from '@pnp/logging';
 import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 
@@ -12,12 +16,19 @@ import * as strings from 'PersonalInformationWebPartStrings';
 import PersonalInformation from './components/PersonalInformation';
 import { IPersonalInformationProps } from './components/IPersonalInformationProps';
 import { ServiceETools } from '../../utils/ServiceETools';
+import { IDLists } from '../../utils/IDLists';
+import { PersonalInformationServices } from '../../services/PersonalInformationServices';
 
 export interface IPersonalInformationWebPartProps {
-  description: string;
+  urlList: string;
+  toggleWithPhoto: boolean;
+  fieldsShow: string[];
 }
 
 export default class PersonalInformationWebPart extends BaseClientSideWebPart<IPersonalInformationWebPartProps> {
+
+  private _personalInformationServices: PersonalInformationServices;
+
 
   /**
    * Metodo inicial del webpart
@@ -40,10 +51,18 @@ export default class PersonalInformationWebPart extends BaseClientSideWebPart<IP
   }
 
   public render(): void {
+    if (this.properties.urlList) {
+      this._personalInformationServices = new PersonalInformationServices(this.properties.urlList.toString(), this.context);
+    }
     const element: React.ReactElement<IPersonalInformationProps> = React.createElement(
       PersonalInformation,
       {
-        description: this.properties.description
+        _personalInformationServices: this._personalInformationServices,
+        context: this.context,
+
+        urlList: this.properties.urlList,
+        toggleWithPhoto: this.properties.toggleWithPhoto,
+        fieldsShow: this.properties.fieldsShow,
       }
     );
 
@@ -61,7 +80,7 @@ export default class PersonalInformationWebPart extends BaseClientSideWebPart<IP
   protected get disableReactivePropertyChanges(): boolean {
     return true;
   }
-  
+
   protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
     return {
       pages: [
@@ -73,8 +92,53 @@ export default class PersonalInformationWebPart extends BaseClientSideWebPart<IP
             {
               groupName: strings.BasicGroupName,
               groupFields: [
-                PropertyPaneTextField('description', {
-                  label: strings.DescriptionFieldLabel
+                PropertyPaneTextField('urlList', {
+                  label: "Url del sitio",
+                  placeholder: "https://edeasco.sharepoint.com/sites/ed-pers-simonb/",
+                }),
+                PropertyFieldMultiSelect('fieldsShow', {
+                  key: 'fieldsShow',
+                  label: "Qué desea ver",
+                  options: [
+                    // {
+                    //   key: "Title",
+                    //   text: "Nombre completo"
+                    // },
+                    {
+                      key: "departamento",
+                      text: "Departamento"
+                    },
+                    {
+                      key: "correo",
+                      text: "Correo electrónico"
+                    },
+                    // {
+                    //   key: "descripcion",
+                    //   text: "Descripción"
+                    // },
+                    // {
+                    //   key: "telefono",
+                    //   text: "Teléfono"
+                    // },
+                    // {
+                    //   key: "direccion",
+                    //   text: "Dirección"
+                    // },
+                    // {
+                    //   key: "edad",
+                    //   text: "Edad"
+                    // }
+                  ],
+                  selectedKeys: this.properties.fieldsShow
+                }),
+                PropertyFieldToggleWithCallout('toggleWithPhoto', {
+                  calloutTrigger: CalloutTriggers.Click,
+                  key: 'toggleWithPhotoId',
+                  label: 'Con foto',
+                  calloutContent: React.createElement('p', {}, 'Puede elegir si desea ver la información del usuario con o sin foto'),
+                  onText: 'Sí',
+                  offText: 'No',
+                  checked: this.properties.toggleWithPhoto
                 })
               ]
             }

@@ -4,7 +4,7 @@ import { ApplicationCustomizerContext } from "@microsoft/sp-application-base";
 //locals
 import { IListItemService } from "./IListItemService";
 import { IListItem } from "./../../models/IListItem";
-
+    
 //Representación de una consulta SP
 export interface IQueryable {
     select?: string;
@@ -46,8 +46,6 @@ export abstract class ListItemService implements IListItemService {
         this._listName = listName;
         this._context = context;
     }
-
-
 
     /**
      * Obtener el nombre de la lista de la instancia

@@ -5,9 +5,11 @@
  * @interface IPersonalInformation
  */
 export interface IPersonalInformation {
+	Id: number;
+	ID: number;
 	Title: string;
 	departamento: string;
-	foto: string;
+	[foto: string]: any;
 	correo: string;
 	descripcion: string;
 	telefono: string;

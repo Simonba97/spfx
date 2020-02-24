@@ -1,5 +1,5 @@
 import { WebPartContext } from "@microsoft/sp-webpart-base";
-import { TabsInvormativosServices } from '../../../services/TabsInvormativosServices';
+import { TabsInvormativosServices } from "../../../services/TabsInvormativosServices";
 
 export interface IVisorTabsProps {
   tabsInformativosServices: TabsInvormativosServices;
